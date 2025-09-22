@@ -1,4 +1,5 @@
 // File: src/Systems/DialogueSystem.cs
+
 using System.Collections.Generic;
 
 namespace OpalMono.Systems

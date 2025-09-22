@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using OpalMono.Input;
+
 namespace OpalMono.Entities
 {
     public abstract class Entity
@@ -39,6 +40,8 @@ namespace OpalMono.Entities
         private float _speed = 200f;
         private float _sprintMultiplier = 1.5f;
         private Texture2D _texture;
+        private const int PLAYER_WIDTH = 32;
+        private const int PLAYER_HEIGHT = 32;
         
         // RPG Stats
         public int Health { get; set; } = 100;
@@ -56,7 +59,7 @@ namespace OpalMono.Entities
         {
             _texture = texture;
             Position = startPosition;
-            UpdateBoundingBox(32, 32);
+            UpdateBoundingBox(PLAYER_WIDTH, PLAYER_HEIGHT);
         }
 
         public void HandleInput(InputHandler input, float deltaTime)
@@ -76,9 +79,41 @@ namespace OpalMono.Entities
             }
 
             Velocity = movement * currentSpeed;
-            Position += Velocity * deltaTime;
+            UpdateBoundingBox(PLAYER_WIDTH, PLAYER_HEIGHT);
+        }
+
+        // Method to check if a new position would be valid
+        public bool CanMoveTo(Vector2 newPosition, World.Map map)
+        {
+            return map.IsPositionWalkable(newPosition, PLAYER_WIDTH, PLAYER_HEIGHT);
+        }
+
+        // Method to apply movement with collision checking
+        public void ApplyMovement(float deltaTime, World.Map map)
+        {
+            if (Velocity == Vector2.Zero) return;
+
+            Vector2 newPosition = Position;
             
-            UpdateBoundingBox(32, 32);
+            // Try horizontal movement first
+            newPosition.X += Velocity.X * deltaTime;
+            if (CanMoveTo(newPosition, map))
+            {
+                Position = newPosition;
+            }
+            else
+            {
+                newPosition.X = Position.X; // Revert X movement
+            }
+
+            // Then try vertical movement
+            newPosition.Y += Velocity.Y * deltaTime;
+            if (CanMoveTo(newPosition, map))
+            {
+                Position = newPosition;
+            }
+
+            UpdateBoundingBox(PLAYER_WIDTH, PLAYER_HEIGHT);
         }
 
         public override void Update(GameTime gameTime)
@@ -90,7 +125,12 @@ namespace OpalMono.Entities
         {
             if (_texture != null)
             {
-                spriteBatch.Draw(_texture, Position, Color.White);
+                // Draw player centered on their position
+                Vector2 drawPosition = new Vector2(
+                    Position.X - PLAYER_WIDTH / 2, 
+                    Position.Y - PLAYER_HEIGHT / 2
+                );
+                spriteBatch.Draw(_texture, drawPosition, Color.White);
             }
         }
 

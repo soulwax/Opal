@@ -1,4 +1,5 @@
 // File: src/World/Map.cs
+
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using OpalMono.Graphics;
@@ -38,6 +39,10 @@ namespace OpalMono.World
         private int _width, _height;
         private int _tileSize = 32;
         private Texture2D _tileTexture;
+
+        public int Width => _width;
+        public int Height => _height;
+        public int TileSize => _tileSize;
 
         public Map(int width, int height, Texture2D tileTexture)
         {
@@ -84,6 +89,31 @@ namespace OpalMono.World
                 return false;
 
             return _tiles[tileX, tileY].IsWalkable;
+        }
+
+        // Enhanced collision checking that considers entity size
+        public bool IsPositionWalkable(Vector2 position, int entityWidth, int entityHeight)
+        {
+            // Calculate the bounding box of the entity at this position
+            int left = (int)((position.X - entityWidth / 2) / _tileSize);
+            int right = (int)((position.X + entityWidth / 2) / _tileSize);
+            int top = (int)((position.Y - entityHeight / 2) / _tileSize);
+            int bottom = (int)((position.Y + entityHeight / 2) / _tileSize);
+
+            // Check all tiles that the entity would occupy
+            for (int x = left; x <= right; x++)
+            {
+                for (int y = top; y <= bottom; y++)
+                {
+                    if (x < 0 || x >= _width || y < 0 || y >= _height)
+                        return false;
+                    
+                    if (!_tiles[x, y].IsWalkable)
+                        return false;
+                }
+            }
+
+            return true;
         }
 
         public Tile GetTileAt(Vector2 position)
