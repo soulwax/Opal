@@ -1,6 +1,6 @@
 # File: .gitignore
+# User Specific
 
-#User Specific
 *.userprefs
 *.usertasks
 
@@ -63,3 +63,5 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+tree.txt
