@@ -4,22 +4,38 @@ using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using OpalMono.Core;
+using OpalMono.Entities;
+using OpalMono.World;
+using OpalMono.Graphics;
+using OpalMono.Systems;
+using OpalMono.Input;
 
 namespace OpalMono;
-
 
 public class Opal : Game
 {
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
     private InputHandler _inputHandler;
+    private GameStateManager _stateManager;
 
-    private Vector2 mousePosition;
-    // TODO: dummy player variables here
-    private Vector2 playerPosition = new Vector2(400, 300);
-    private float playerSpeed = 200f; // pixels per second
+    // Core systems
+    private Camera _camera;
+    private DialogueSystem _dialogueSystem;
 
-    float mouseDrag = 0f;
+    // Game objects
+    private Player _player;
+    private Map _currentMap;
+
+    // Textures (temporary placeholders)
+    private Texture2D _playerTexture;
+    private Texture2D _tileTexture;
+    private SpriteFont _font;
+
+    // Game state
+    private bool _showDebugInfo = false;
+    private bool _isInDialogue = false;
 
     public Opal(string title, int width = 800, int height = 600)
     {
@@ -32,265 +48,264 @@ public class Opal : Game
         Window.Title = title;
     }
 
-
     protected override void Initialize()
     {
-        // TODO: Add more initialization logic here
-        base.Initialize();
+        _inputHandler = new InputHandler();
+        _stateManager = new GameStateManager();
+        _camera = new Camera(_graphics.PreferredBackBufferWidth, _graphics.PreferredBackBufferHeight);
+        _dialogueSystem = new DialogueSystem();
 
+        base.Initialize();
     }
 
     protected override void LoadContent()
     {
-        _inputHandler = new InputHandler();
         _spriteBatch = new SpriteBatch(GraphicsDevice);
 
-        // TODO: Use this.Content to load game content here
+        // Create placeholder textures
+        _playerTexture = CreateColorTexture(Color.Lime, 32, 32);
+        _tileTexture = CreateColorTexture(Color.Gray, 32, 32);
+
+        // Load font (you'll need to add this to Content.mgcb)
+        // _font = Content.Load<SpriteFont>("DefaultFont");
+
+        // Initialize game objects
+        _player = new Player(_playerTexture, new Vector2(400, 300));
+        _currentMap = new Map(50, 50, _tileTexture);
+
+        // Setup dialogue system
+        _dialogueSystem.LoadDialogues();
+
+        // Set camera to follow player
+        _camera.Follow(_player.Position);
     }
 
-protected override void Update(GameTime gameTime)
-{
-    _inputHandler.Update();
-    
-    // Exit conditions
-    if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || 
-        _inputHandler.IsKeyDown(Keys.Escape))
-        Exit();
-
-    float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-    // === KEYBOARD INPUT ===
-    
-    // Single key press detection
-    if (_inputHandler.IsKeyPressed(Keys.Space))
+    protected override void Update(GameTime gameTime)
     {
-        Console.WriteLine("Space pressed - Jump or action triggered!");
-    }
+        _inputHandler.Update();
 
-    // Key release detection
-    if (_inputHandler.IsKeyReleased(Keys.Space))
-    {
-        Console.WriteLine("Space released - Stop jump or action!");
-    }
+        // Exit conditions
+        if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed ||
+            _inputHandler.IsKeyDown(Keys.Escape))
+            Exit();
 
-    // Hold detection for continuous actions
-    if (_inputHandler.IsKeyDown(Keys.LeftShift))
-    {
-        playerSpeed = 400f; // Sprint speed
-    }
-    else
-    {
-        playerSpeed = 200f; // Normal speed
-    }
+        float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-    // Multiple key alternatives
-    if (_inputHandler.IsAnyKeyPressed(Keys.Enter, Keys.E, Keys.F))
-    {
-        Console.WriteLine("Interact key pressed!");
-    }
+        // Debug toggle
+        if (_inputHandler.IsKeyPressed(Keys.F1))
+            _showDebugInfo = !_showDebugInfo;
 
-    // Check for any input this frame
-    if (_inputHandler.JustPressedKeys.Count > 0)
-    {
-        Console.WriteLine($"Keys pressed this frame: {string.Join(", ", _inputHandler.JustPressedKeys)}");
-    }
-
-    // === MOUSE INPUT ===
-    
-    // Basic mouse button detection
-    if (_inputHandler.IsMouseButtonPressed(MouseButton.Left))
-    {
-        mousePosition = _inputHandler.MousePosition;
-        Console.WriteLine($"LMB pressed at {mousePosition.X}, {mousePosition.Y}");
-    }
-
-    if (_inputHandler.IsMouseButtonReleased(MouseButton.Left))
-    {
-        mousePosition = _inputHandler.MousePosition;
-        Console.WriteLine($"LMB released at {mousePosition.X}, {mousePosition.Y}");
-    }
-
-    // Right-click for context menu or secondary action
-    if (_inputHandler.IsMouseButtonPressed(MouseButton.Right))
-    {
-        Console.WriteLine($"Right-click context menu at {_inputHandler.MousePosition}");
-    }
-
-    // Middle mouse button for camera or special actions
-    if (_inputHandler.IsMouseButtonDown(MouseButton.Middle))
-    {
-        Console.WriteLine("Middle mouse held - camera pan mode");
-    }
-
-    // Mouse wheel scrolling
-    if (_inputHandler.ScrollWheelDelta != 0)
-    {
-        float zoomChange = _inputHandler.ScrollWheelDelta * 0.001f;
-        Console.WriteLine($"Zoom changed by {zoomChange}");
-    }
-
-    // === DRAG SYSTEM ===
-    
-    // Drag started (only triggers once when drag begins)
-    if (_inputHandler.DragStarted)
-    {
-        Console.WriteLine($"Drag started at {_inputHandler.DragStartPosition} with {_inputHandler.DragButton}");
-    }
-
-    // Currently dragging
-    if (_inputHandler.IsDragging)
-    {
-        Vector2 dragDelta = _inputHandler.DragDelta;
-        float dragDistance = _inputHandler.DragDistance;
-        
-        Console.WriteLine($"Dragging: Delta({dragDelta.X:F1}, {dragDelta.Y:F1}), Distance: {dragDistance:F1}");
-        
-        // Example: Move player with drag
-        // playerPosition = _inputHandler.DragStartPosition + dragDelta;
-        
-        // Example: Camera panning
-        // cameraOffset = baseCameraOffset + dragDelta;
-        
-        // Check if drag exceeds certain distance
-        if (_inputHandler.IsDragDistanceGreaterThan(50f))
+        // Handle dialogue system
+        if (_dialogueSystem.IsActive)
         {
-            Console.WriteLine("Long drag detected!");
+            HandleDialogue();
+        }
+        else
+        {
+            HandleGameplay(deltaTime, gameTime);
+        }
+
+        // Update camera
+        _camera.Follow(_player.Position);
+        _camera.Update(gameTime);
+
+        base.Update(gameTime);
+    }
+
+    private void HandleDialogue()
+    {
+        // Handle dialogue input
+        if (_inputHandler.IsKeyPressed(Keys.D1))
+            _dialogueSystem.SelectChoice(0);
+        else if (_inputHandler.IsKeyPressed(Keys.D2))
+            _dialogueSystem.SelectChoice(1);
+        else if (_inputHandler.IsKeyPressed(Keys.D3))
+            _dialogueSystem.SelectChoice(2);
+        else if (_inputHandler.IsKeyPressed(Keys.Enter) || _inputHandler.IsKeyPressed(Keys.Space))
+            _dialogueSystem.EndDialogue();
+    }
+
+    private void HandleGameplay(float deltaTime, GameTime gameTime)
+    {
+        // Player movement with collision detection
+        Vector2 oldPosition = _player.Position;
+        _player.HandleInput(_inputHandler, deltaTime);
+
+        // Check map boundaries and collisions
+        if (!_currentMap.IsWalkable(_player.Position))
+        {
+            _player.Position = oldPosition; // Revert movement
+        }
+
+        // Interaction system
+        if (_inputHandler.IsKeyPressed(Keys.E) || _inputHandler.IsKeyPressed(Keys.F))
+        {
+            HandleInteraction();
+        }
+
+        // Player updates
+        _player.Update(gameTime);
+
+        // Check for special tiles
+        CheckTileInteractions();
+
+        // Example: Debug commands
+        if (_inputHandler.IsKeyPressed(Keys.H))
+        {
+            _player.TakeDamage(10);
+            Console.WriteLine($"Player health: {_player.Health}/{_player.MaxHealth}");
+        }
+
+        if (_inputHandler.IsKeyPressed(Keys.X))
+        {
+            _player.GainExperience(25);
+            Console.WriteLine($"Player XP: {_player.Experience}, Level: {_player.Level}");
         }
     }
 
-    // Drag completed (only triggers when drag ends)
-    if (_inputHandler.IsDragCompleted())
+    private void HandleInteraction()
     {
-        Console.WriteLine($"Drag completed! Total distance: {_inputHandler.DragDistance:F1}");
-        
-        // Example: Drop object if dragged to specific area
-        Rectangle dropZone = new Rectangle(100, 100, 200, 200);
-        if (_inputHandler.IsDragInBounds(dropZone))
+        var currentTile = _currentMap.GetTileAt(_player.Position);
+
+        switch (currentTile.Type)
         {
-            Console.WriteLine("Object dropped in valid zone!");
+            case TileType.TerminalAccess:
+                Console.WriteLine("Accessing data terminal...");
+                _dialogueSystem.StartDialogue("start");
+                break;
+
+            case TileType.AugmentationStation:
+                Console.WriteLine("Augmentation interface detected...");
+                // Handle augmentation mechanics
+                _player.AugmentationLevel = Math.Min(1.0f, _player.AugmentationLevel + 0.1f);
+                _player.HumanityLevel = Math.Max(0.0f, _player.HumanityLevel - 0.05f);
+                Console.WriteLine($"Augmentation: {_player.AugmentationLevel:P0}, Humanity: {_player.HumanityLevel:P0}");
+                break;
+
+            default:
+                Console.WriteLine("Nothing to interact with here.");
+                break;
         }
     }
 
-    // === MOVEMENT SYSTEM ===
-    
-    // Get movement vector from WASD/Arrow keys
-    Vector2 movement = _inputHandler.GetMovementVector(useWASD: true, useArrows: true);
-    playerPosition += movement * playerSpeed * deltaTime;
-    
-    // Alternative: Custom movement with different keys
-    Vector2 customMovement = Vector2.Zero;
-    if (_inputHandler.IsKeyDown(Keys.Up)) customMovement.Y -= 1;
-    if (_inputHandler.IsKeyDown(Keys.Down)) customMovement.Y += 1;
-    if (_inputHandler.IsKeyDown(Keys.Left)) customMovement.X -= 1;
-    if (_inputHandler.IsKeyDown(Keys.Right)) customMovement.X += 1;
-    
-    if (customMovement != Vector2.Zero)
+    private void CheckTileInteractions()
     {
-        customMovement.Normalize();
-        // Use customMovement for something else
-    }
+        var currentTile = _currentMap.GetTileAt(_player.Position);
 
-    // === BOUNDS CHECKING ===
-    
-    // Keep player within screen bounds
-    playerPosition.X = MathHelper.Clamp(playerPosition.X, 0, _graphics.PreferredBackBufferWidth);
-    playerPosition.Y = MathHelper.Clamp(playerPosition.Y, 0, _graphics.PreferredBackBufferHeight);
-
-    // Check if mouse is in specific areas
-    Rectangle uiArea = new Rectangle(50, 50, 150, 100);
-    if (_inputHandler.IsMouseInBounds(uiArea))
-    {
-        if (_inputHandler.IsMouseButtonPressed(MouseButton.Left))
+        // Passive effects from standing on certain tiles
+        if (currentTile.Type == TileType.DataPoint)
         {
-            Console.WriteLine("UI element clicked!");
+            // Slow data absorption
+            _player.GainExperience(1);
         }
     }
-
-    // Circular bounds checking
-    Vector2 circleCenter = new Vector2(400, 300);
-    float circleRadius = 100f;
-    if (_inputHandler.IsMouseInBounds(circleCenter, circleRadius))
-    {
-        Console.WriteLine("Mouse is inside circular area");
-    }
-
-    // === UTILITY FEATURES ===
-    
-    // Mouse movement detection
-    if (_inputHandler.HasMouseMoved())
-    {
-        Vector2 mouseDelta = _inputHandler.MouseDelta;
-        float mouseSpeed = _inputHandler.GetMouseMovementDistance();
-        
-        // Only log significant mouse movement to avoid spam
-        if (mouseSpeed > 5f)
-        {
-            Console.WriteLine($"Mouse moved {mouseSpeed:F1} pixels");
-        }
-    }
-
-    // Debug: Show all currently held keys
-    if (_inputHandler.CurrentPressedKeys.Length > 0)
-    {
-        // Uncomment for debugging
-        // Console.WriteLine($"Held keys: {string.Join(", ", _inputHandler.CurrentPressedKeys)}");
-    }
-
-    // === ADVANCED EXAMPLES ===
-    
-    // Combo detection example
-    if (_inputHandler.IsKeyDown(Keys.LeftControl) && _inputHandler.IsKeyPressed(Keys.S))
-    {
-        Console.WriteLine("Ctrl+S pressed - Save game!");
-    }
-
-    // Toggle example
-    if (_inputHandler.IsKeyPressed(Keys.Tab))
-    {
-        Console.WriteLine("Toggle inventory/menu");
-    }
-
-    // Charge-up action example
-    if (_inputHandler.IsKeyDown(Keys.C))
-    {
-        // Charge up power while key is held
-        Console.WriteLine("Charging power...");
-    }
-    if (_inputHandler.IsKeyReleased(Keys.C))
-    {
-        Console.WriteLine("Power released!");
-    }
-
-    // Double-click simulation (you'd need to add timing logic)
-    // This is just showing the concept
-    if (_inputHandler.IsMouseButtonPressed(MouseButton.Left))
-    {
-        // Check if this is a double-click by tracking time between clicks
-        // Implementation would require additional timing variables
-    }
-
-    // === DRAG CONFIGURATION ===
-    
-    // Adjust drag sensitivity dynamically
-    if (_inputHandler.IsKeyDown(Keys.LeftAlt))
-    {
-        _inputHandler.DragThreshold = 20f; // Require more movement to start drag
-    }
-    else
-    {
-        _inputHandler.DragThreshold = 5f; // Default sensitivity
-    }
-
-    // Important: Call base.Update last
-    base.Update(gameTime);
-}
 
     protected override void Draw(GameTime gameTime)
     {
-        GraphicsDevice.Clear(Color.CornflowerBlue);
+        GraphicsDevice.Clear(Color.Black);
 
-        // TODO: Add drawing code here
+        // World rendering with camera transform
+        _spriteBatch.Begin(transformMatrix: _camera.GetTransform());
+
+        // Draw map
+        _currentMap.Draw(_spriteBatch, _camera);
+
+        // Draw player
+        _player.Draw(_spriteBatch);
+
+        _spriteBatch.End();
+
+        // UI rendering (no camera transform)
+        _spriteBatch.Begin();
+
+        DrawUI();
+
+        if (_dialogueSystem.IsActive)
+            DrawDialogue();
+
+        if (_showDebugInfo)
+            DrawDebugInfo();
+
+        _spriteBatch.End();
 
         base.Draw(gameTime);
+    }
+
+    private void DrawUI()
+    {
+        // Health bar
+        Rectangle healthBarBg = new Rectangle(20, 20, 200, 20);
+        Rectangle healthBar = new Rectangle(20, 20,
+            (int)(200 * ((float)_player.Health / _player.MaxHealth)), 20);
+
+        DrawRectangle(_spriteBatch, healthBarBg, Color.DarkRed);
+        DrawRectangle(_spriteBatch, healthBar, Color.Red);
+
+        // Energy bar
+        Rectangle energyBarBg = new Rectangle(20, 45, 150, 15);
+        Rectangle energyBar = new Rectangle(20, 45,
+            (int)(150 * ((float)_player.Energy / _player.MaxEnergy)), 15);
+
+        DrawRectangle(_spriteBatch, energyBarBg, Color.DarkBlue);
+        DrawRectangle(_spriteBatch, energyBar, Color.Cyan);
+
+        // Augmentation/Humanity indicators
+        Rectangle augBar = new Rectangle(20, 65, 100, 10);
+        Rectangle humanityBar = new Rectangle(125, 65, 100, 10);
+
+        DrawRectangle(_spriteBatch, augBar, Color.Orange * _player.AugmentationLevel);
+        DrawRectangle(_spriteBatch, humanityBar, Color.White * _player.HumanityLevel);
+
+        // Level indicator
+        if (_font != null)
+        {
+            _spriteBatch.DrawString(_font, $"Level {_player.Level}", new Vector2(20, 80), Color.White);
+        }
+    }
+
+    private void DrawDialogue()
+    {
+        var node = _dialogueSystem.CurrentNode;
+
+        // Dialogue background
+        Rectangle dialogueBg = new Rectangle(50, _graphics.PreferredBackBufferHeight - 200,
+            _graphics.PreferredBackBufferWidth - 100, 150);
+        DrawRectangle(_spriteBatch, dialogueBg, Color.Black * 0.8f);
+
+        // For now, draw text placeholders since we don't have font loaded
+        // In a real implementation, you'd draw the dialogue text and choices here
+        DrawRectangle(_spriteBatch, new Rectangle(60, dialogueBg.Y + 10, 300, 20), Color.Gray);
+        DrawRectangle(_spriteBatch, new Rectangle(60, dialogueBg.Y + 40, 250, 15), Color.DarkGray);
+        DrawRectangle(_spriteBatch, new Rectangle(60, dialogueBg.Y + 60, 280, 15), Color.DarkGray);
+    }
+
+    private void DrawDebugInfo()
+    {
+        // Debug information overlay
+        var debugBg = new Rectangle(300, 20, 200, 120);
+        DrawRectangle(_spriteBatch, debugBg, Color.Black * 0.7f);
+
+        // Draw debug rectangles as placeholders for text
+        DrawRectangle(_spriteBatch, new Rectangle(310, 30, 180, 15), Color.Green);  // Position
+        DrawRectangle(_spriteBatch, new Rectangle(310, 50, 150, 15), Color.Yellow); // Health
+        DrawRectangle(_spriteBatch, new Rectangle(310, 70, 120, 15), Color.Cyan);   // Energy
+        DrawRectangle(_spriteBatch, new Rectangle(310, 90, 160, 15), Color.Orange); // Augmentation
+        DrawRectangle(_spriteBatch, new Rectangle(310, 110, 140, 15), Color.White); // Humanity
+    }
+
+    private Texture2D CreateColorTexture(Color color, int width, int height)
+    {
+        Texture2D texture = new Texture2D(GraphicsDevice, width, height);
+        Color[] data = new Color[width * height];
+        for (int i = 0; i < data.Length; i++)
+            data[i] = color;
+        texture.SetData(data);
+        return texture;
+    }
+
+    private void DrawRectangle(SpriteBatch spriteBatch, Rectangle rectangle, Color color)
+    {
+        var pixel = CreateColorTexture(Color.White, 1, 1);
+        spriteBatch.Draw(pixel, rectangle, color);
     }
 }

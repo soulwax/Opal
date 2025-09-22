@@ -1,9 +1,11 @@
+// File: src/InputHandler.cs
+
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 
-namespace OpalMono
+namespace OpalMono.Input
 {
     public class InputHandler
     {
