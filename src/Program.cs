@@ -1,3 +1,5 @@
+﻿// File: src/Program.cs
+
 ﻿using Microsoft.Xna.Framework;
 
 namespace Opal
@@ -14,7 +16,7 @@ namespace Opal
         public static void Main(string[] args)
         {
 
-            using var game = new OpalMono.Game1(title, width, height);
+            using var game = new OpalMono.Opal(title, width, height);
             game.Window.AllowUserResizing = false;
             game.Window.AllowAltF4 = true;
     
