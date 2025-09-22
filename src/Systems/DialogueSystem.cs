@@ -2,7 +2,7 @@
 
 using System.Collections.Generic;
 
-namespace OpalMono.Systems
+namespace Opal.Systems
 {
     public struct DialogueNode
     {

@@ -1,11 +1,9 @@
-// File: src/World/Map.cs
-
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using OpalMono.Graphics;
+using Opal.Graphics;
 using System;
 
-namespace OpalMono.World
+namespace Opal.World
 {
     public enum TileType
     {
@@ -107,7 +105,7 @@ namespace OpalMono.World
                 {
                     if (x < 0 || x >= _width || y < 0 || y >= _height)
                         return false;
-                    
+
                     if (!_tiles[x, y].IsWalkable)
                         return false;
                 }

@@ -1,9 +1,10 @@
 // File: src/Core/GameState.cs
+
 using Microsoft.Xna.Framework;
 using System.Collections.Generic;
-using OpalMono.Input;
+using Opal.Input;
 
-namespace OpalMono.Core
+namespace Opal.Core
 {
     public enum GameStateType
     {

@@ -1,8 +1,7 @@
-// File: src/Graphics/Camera.cs
 
 using Microsoft.Xna.Framework;
 
-namespace OpalMono.Graphics
+namespace Opal.Graphics
 {
     public class Camera
     {
@@ -13,7 +12,7 @@ namespace OpalMono.Graphics
 
         private Vector2 _targetPosition;
         private float _followSpeed = 5f;
-        
+
         // Map boundaries for camera constraints
         private Rectangle _mapBounds;
 
@@ -36,7 +35,7 @@ namespace OpalMono.Graphics
         public void Update(GameTime gameTime)
         {
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-            
+
             // Smooth camera following
             Vector2 difference = _targetPosition - Position;
             Vector2 newPosition = Position + difference * _followSpeed * deltaTime;
@@ -45,12 +44,12 @@ namespace OpalMono.Graphics
             float halfViewWidth = ViewWidth / (2f * Zoom);
             float halfViewHeight = ViewHeight / (2f * Zoom);
 
-            newPosition.X = MathHelper.Clamp(newPosition.X, 
-                _mapBounds.Left + halfViewWidth, 
+            newPosition.X = MathHelper.Clamp(newPosition.X,
+                _mapBounds.Left + halfViewWidth,
                 _mapBounds.Right - halfViewWidth);
-            
-            newPosition.Y = MathHelper.Clamp(newPosition.Y, 
-                _mapBounds.Top + halfViewHeight, 
+
+            newPosition.Y = MathHelper.Clamp(newPosition.Y,
+                _mapBounds.Top + halfViewHeight,
                 _mapBounds.Bottom - halfViewHeight);
 
             Position = newPosition;

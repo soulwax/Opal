@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 
-namespace OpalMono.Input
+namespace Opal.Input
 {
     public class InputHandler
     {

@@ -1,4 +1,4 @@
-﻿// File: src/Program.cs
+// File: src/Program.cs
 
 namespace Opal
 {
@@ -14,7 +14,7 @@ namespace Opal
         public static void Main(string[] args)
         {
 
-            using var game = new OpalMono.Opal(title, width, height);
+            using var game = new OpalGame(title, width, height);
             game.Window.AllowUserResizing = false;
             game.Window.AllowAltF4 = true;
     
