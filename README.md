@@ -18,7 +18,7 @@ Navigate through a world where cobblestone streets remember a bygone era, where 
 ### Core Gameplay
 
 - **2D Top-down RPG** with smooth character movement and collision detection
-- **Gothic dystopian future Setting** featuring augmented characters in a post-human world
+- **Gothic future Setting** featuring augmented characters in a post-human world
 - **Interactive Environment** with special tiles and interaction systems
 - **Real-time Combat** and character progression system
 - **Dialogue System** for narrative interactions
