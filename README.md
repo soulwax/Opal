@@ -17,25 +17,12 @@ Navigate through a world where cobblestone streets remember a bygone era, where 
 
 ### Core Gameplay
 
-- **2D Top-down RPG** with smooth character movement and collision detection
-- **Gothic future Setting** featuring augmented characters in a post-human world
-- **Interactive Environment** with special tiles and interaction systems
-- **Real-time Combat** and character progression system
-- **Dialogue System** for narrative interactions
-
-### Character Systems
-
-- **Health & Energy Management** with regeneration mechanics
-- **Experience & Leveling** system with stat progression
-- **Augmentation vs Humanity** - balance cybernetic enhancement with human essence
-- **Sprint System** with energy consumption mechanics
-
-### Technical Features
-
-- **Camera System** with smooth following and map boundary constraints
-- **Tile-based World** with collision detection and special tile types
-- **Debug Mode** with comprehensive development tools
-- **Modular Architecture** with clean separation of concerns
+- To be implemented
+- **Features**:
+- - Top Down 2.5D RPG
+- - Narrative+Gameplay driven
+- - Philosophical and Metaphysical themes
+- - Possibly rogue lite **or** expansive narrative and world
 
 ## 🛠️ Technologies
 
