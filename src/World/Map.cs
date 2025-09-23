@@ -125,13 +125,23 @@ namespace Opal.World
             return _tiles[tileX, tileY];
         }
 
+
         public void Draw(SpriteBatch spriteBatch, Camera camera)
         {
-            // Calculate visible tile range
-            int startX = Math.Max(0, (int)(camera.Position.X / _tileSize) - 1);
-            int endX = Math.Min(_width, startX + (int)(camera.ViewWidth / _tileSize) + 2);
-            int startY = Math.Max(0, (int)(camera.Position.Y / _tileSize) - 1);
-            int endY = Math.Min(_height, startY + (int)(camera.ViewHeight / _tileSize) + 2);
+            // Calculate camera bounds in world space
+            float halfViewWidth = camera.ViewWidth / (2f * camera.Zoom);
+            float halfViewHeight = camera.ViewHeight / (2f * camera.Zoom);
+
+            float leftEdge = camera.Position.X - halfViewWidth;
+            float rightEdge = camera.Position.X + halfViewWidth;
+            float topEdge = camera.Position.Y - halfViewHeight;
+            float bottomEdge = camera.Position.Y + halfViewHeight;
+
+            // Convert to tile coordinates with margins
+            int startX = Math.Max(0, (int)(leftEdge / _tileSize) - 1);
+            int endX = Math.Min(_width, (int)(rightEdge / _tileSize) + 2);
+            int startY = Math.Max(0, (int)(topEdge / _tileSize) - 1);
+            int endY = Math.Min(_height, (int)(bottomEdge / _tileSize) + 2);
 
             for (int x = startX; x < endX; x++)
             {

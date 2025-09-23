@@ -64,8 +64,7 @@ public class OpalGame : Game
         _playerTexture = CreateColorTexture(Color.Lime, 32, 32);
         _tileTexture = CreateColorTexture(Color.Gray, 32, 32);
 
-        // Load font (you'll need to add this to Content.mgcb)
-        // _font = Content.Load<SpriteFont>("DefaultFont");
+        _font = Content.Load<SpriteFont>("Renogare");
 
         // Initialize map FIRST
         _currentMap = new Map(50, 50, _tileTexture);
